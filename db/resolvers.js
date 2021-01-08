@@ -1,4 +1,5 @@
 const Usuario = require('./../models/Usuario');
+const Producto = require('./../models/Producto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config({path: 'variables.env'});
@@ -14,7 +15,23 @@ const
     Query: {
       obtenerUsuario: async (_, {token}) => {
         return await jwt.verify(token, process.env.JWT_SECRET);
-      }
+      },
+      obtenerProductos: async () => {
+        try {
+          return await Producto.find({});
+        } catch (error) {
+          console.log(error);
+        }
+      },
+      obtenerProducto: async (_, {id}) => {
+        const producto = await Producto.findById(id);
+
+        if (!producto) {
+          throw new Error('El producto no existe.');
+        }
+
+        return producto;
+      },
     },
     Mutation: {
       nuevoUsuario: async (_, {input}) => {
@@ -62,7 +79,40 @@ const
           token: crearToken(usuario, process.env.JWT_SECRET, '24h'),
         }
       },
-    }
+      nuevoProducto: async (_, {input}) => {
+        try {
+          const producto = new Producto(input);
+
+          const resultado = await producto.save();
+
+          return resultado;
+        } catch (error) {
+          console.log(error);
+        }
+      },
+      actualizarProducto: async (_, {id, input}) => {
+        let producto = await Producto.findById(id);
+
+        if (!producto) {
+          throw new Error('El producto no existe.');
+        }
+
+        producto = await Producto.findOneAndUpdate({_id: id}, input, {new: true});
+
+        return producto;
+      },
+      eliminarProducto: async (_, {id}) => {
+        let producto = await Producto.findById(id);
+
+        if (!producto) {
+          throw new Error('El producto no existe.');
+        }
+
+        await producto.delete();
+
+        return "El producto ha sido eliminado";
+      },
+    },
   };
 
 module.exports = resolvers;
