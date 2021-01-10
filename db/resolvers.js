@@ -1,4 +1,5 @@
 const Usuario = require('./../models/Usuario');
+const Cliente = require('./../models/Cliente');
 const Producto = require('./../models/Producto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -31,6 +32,38 @@ const
         }
 
         return producto;
+      },
+      obtenerClientes: async () => {
+        try {
+          const clientes = await Cliente.find();
+
+          return clientes;
+        } catch (error) {
+          console.log(error);
+        }
+      },
+      obtenerClientesVendedor: async (_, {}, ctx) => {
+        try {
+          const vendedorId = ctx.usuario.id.toString();
+          const clientes = await Cliente.find({vendedor: vendedorId});
+
+          return clientes;
+        } catch (error) {
+          console.log(error);
+        }
+      },
+      obtenerCliente: async (_, {id}, ctx) => {
+        const cliente = await Cliente.findById(id);
+
+        if (!cliente) {
+          throw new Error('El cliente no existe');
+        }
+
+        if (cliente.vendedor.toString() !== ctx.usuario.id) {
+          throw new Error('Acceso denegado: No puedes ver este cliente');
+        }
+
+        return cliente;
       },
     },
     Mutation: {
@@ -111,6 +144,58 @@ const
         await producto.delete();
 
         return "El producto ha sido eliminado";
+      },
+      nuevoCliente: async (_, {input}, ctx) => {
+        const {email} = input;
+        //console.log(ctx);
+        let cliente = await Cliente.findOne({email});
+
+        if (cliente) {
+          throw new Error('El cliente ya esta registrado');
+        }
+
+        cliente = new Cliente(input);
+
+        cliente.vendedor = ctx.usuario.id;
+
+        try {
+          cliente = await cliente.save();
+
+          return cliente;
+        } catch (error) {
+          console.log(error);
+        }
+
+      },
+      actualizarCliente: async (_, {id, input}, ctx) => {
+        let cliente = await Cliente.findById(id);
+
+        if (!cliente) {
+          throw new Error('El cliente no existe');
+        }
+
+        if (cliente.vendedor.toString() === ctx.usuario.id) {
+          throw new Error('No puedes modificar este cliente');
+        }
+
+        cliente = await Cliente.findByIdAndUpdate({_id: id}, input, {new: true});
+
+        return cliente;
+      },
+      eliminarCliente: async (_, {id}, ctx) => {
+        let cliente = await Cliente.findById(id);
+
+        if (!cliente) {
+          throw new Error('El cliente no existe');
+        }
+
+        if (cliente.vendedor.toString() === ctx.usuario.id) {
+          throw new Error('No puedes modificar este cliente');
+        }
+
+        await cliente.delete();
+
+        return "El cliente ha sido eliminado";
       },
     },
   };
