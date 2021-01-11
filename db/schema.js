@@ -2,6 +2,16 @@ const {gql} = require('apollo-server');
 
 //Schema
 const typeDefs = gql`
+    type TopCliente {
+        total: Float
+        cliente: [Cliente]
+    }
+
+    type TopVendedor {
+        total: Float
+        vendedor: [Usuario]
+    }
+    
     type Pedido {
         id: ID
         pedido: [PedidoGrupo]
@@ -109,6 +119,11 @@ const typeDefs = gql`
         obtenerPedidosVendedor: [Pedido]
         obtenerPedido(id: ID!): Pedido
         obtenerPedidosEstado(estado: String!): [Pedido]
+        
+        # Busquedas
+        mejoresClientes: [TopCliente]
+        mejoresVendedores: [TopVendedor]
+        buscarProducto(text: String!): [Producto]
     }
 
     type Mutation {
