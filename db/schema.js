@@ -2,6 +2,21 @@ const {gql} = require('apollo-server');
 
 //Schema
 const typeDefs = gql`
+    type Pedido {
+        id: ID
+        pedido: [PedidoGrupo]
+        total: Float
+        cliente: ID
+        vendedor: ID
+        fecha: String
+        estado: EstadoPedido
+    }
+
+    type PedidoGrupo {
+        id: ID
+        cantidad: Int
+    }
+
     type Cliente {
         id: ID
         nombre: String
@@ -11,7 +26,7 @@ const typeDefs = gql`
         telefono: String
         vendedor: ID
     }
-    
+
     type Usuario {
         id: ID
         nombre: String
@@ -53,6 +68,24 @@ const typeDefs = gql`
         precio: Float!
     }
 
+    input PedidoProductoInput {
+        id: ID!
+        cantidad: Int!
+    }
+
+    input PedidoInput {
+        pedido: [PedidoProductoInput]
+        total: Float!
+        cliente: ID!
+        estado: EstadoPedido
+    }
+
+    enum EstadoPedido {
+        PENDIENTE
+        COMPLETADO
+        CANCELADO
+    }
+
     input AutenticarInput {
         email: String!
         password: String!
@@ -65,7 +98,7 @@ const typeDefs = gql`
         #Productos
         obtenerProductos: [Producto],
         obtenerProducto(id: ID!): Producto,
-        
+
         #Clientes
         obtenerClientes: [Cliente]
         obtenerClientesVendedor: [Cliente]
@@ -86,6 +119,9 @@ const typeDefs = gql`
         nuevoCliente(input: ClienteInput): Cliente
         actualizarCliente(id: ID!, input: ClienteInput): Cliente
         eliminarCliente(id: ID!): String
+
+        #Pedidos
+        nuevoPedido(input: PedidoInput): Pedido
     }
 `;
 
