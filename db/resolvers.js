@@ -66,10 +66,51 @@ const
 
         return cliente;
       },
+      obtenerPedidos: async () => {
+        try {
+          const pedidos = await Pedido.find();
+
+          return pedidos;
+        } catch (error) {
+          console.log(error);
+        }
+      },
+      obtenerPedidosVendedor: async (_, {}, ctx) => {
+        try {
+          const vendedor = ctx.usuario.id;
+          const pedidos = await Pedido.find({vendedor});
+
+          return pedidos;
+        } catch (error) {
+          console.log(error);
+        }
+      },
+      obtenerPedido: async (_, {id}, ctx) => {
+        try {
+          const vendedor = ctx.usuario.id;
+          const pedido = await Pedido.findById(id);
+
+          if (!pedido) {
+            throw new Error('El pedido no existe');
+          }
+
+          if (pedido.vendedor.toString() !== vendedor) {
+            throw new Error('No tienes permiso para ver este pedido');
+          }
+
+          return pedido;
+        } catch (error) {
+          console.log(error);
+        }
+      },
+      obtenerPedidosEstado: async (_, {estado}, ctx) => {
+        const pedidos = await Pedido.find({vendedor: ctx.usuario.id, estado});
+
+        return pedidos;
+      }
     },
     Mutation: {
       nuevoUsuario: async (_, {input}) => {
-        console.log(input);
         const {email, password} = input;
 
         //Revisar existencia de usuario
@@ -148,7 +189,6 @@ const
       },
       nuevoCliente: async (_, {input}, ctx) => {
         const {email} = input;
-        //console.log(ctx);
         let cliente = await Cliente.findOne({email});
 
         if (cliente) {
@@ -199,7 +239,6 @@ const
         return "El cliente ha sido eliminado";
       },
       nuevoPedido: async (_, {input}, ctx) => {
-        //console.log(input, ctx);
         const {cliente} = input;
         // Verificar existencia cliente
         let clienteExiste = await Cliente.findById(cliente);
@@ -237,6 +276,59 @@ const
 
         return nuevoPedido;
       },
+      actualizarPedido: async (_, {id, input}, ctx) => {
+        const {cliente} = input;
+
+        const existePedido = await Pedido.findById(id);
+
+        if (!existePedido) {
+          throw new Error('El pedido no existe');
+        }
+
+        const existeCliente = await Cliente.findById(cliente);
+        if (!existeCliente) {
+          throw new Error('El cliente no existe');
+        }
+
+        if (existeCliente.vendedor.toString() !== ctx.usuario.id) {
+          throw new Error('Acceso denegado: no tienes permiso');
+        }
+
+        if (input.pedido) {
+
+          for await (const articulo of input.pedido) {
+            const {id} = articulo;
+
+            const producto = await Producto.findById(id);
+
+            if (articulo.cantidad > producto.existencia) {
+              throw new Error('Uno de los productos no tiene suficiente stock');
+            } else {
+              producto.existencia = producto.existencia - articulo.cantidad;
+              await producto.save();
+            }
+          }
+        }
+
+        const pedido = await Pedido.findByIdAndUpdate({_id: id}, input, {new: true});
+
+        return pedido;
+      },
+      eliminarPedido: async (_, {id}, ctx) => {
+        const pedido = await Pedido.findById(id);
+
+        if (!pedido) {
+          throw new Error('El pedido no existe');
+        }
+
+        if (pedido.vendedor.toString() !== ctx.usuario.id) {
+          throw new Error('Acceso denegado: no tienes permiso');
+        }
+
+        await pedido.delete();
+
+        return "El pedido ha sido eliminado";
+      }
     },
   };
 
