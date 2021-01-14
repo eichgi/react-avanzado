@@ -278,7 +278,7 @@ const
           throw new Error('El cliente no existe');
         }
 
-        if (cliente.vendedor.toString() === ctx.usuario.id) {
+        if (cliente.vendedor.toString() !== ctx.usuario.id) {
           throw new Error('No puedes modificar este cliente');
         }
 
