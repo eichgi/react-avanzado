@@ -11,7 +11,7 @@ const PedidoSchema = mongoose.Schema({
   },
   cliente: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Usuario',
+    ref: 'Cliente',
   },
   vendedor: {
     type: mongoose.Schema.Types.ObjectId,

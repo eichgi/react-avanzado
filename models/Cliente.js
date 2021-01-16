@@ -37,4 +37,4 @@ const ClientesSchema = mongoose.Schema({
   }
 }, {timestamps: true});
 
-module.exports = mongoose.model('Clientes', ClientesSchema);
+module.exports = mongoose.model('Cliente', ClientesSchema);
